@@ -46,6 +46,10 @@ void setup() {
 }
 
 void loop() {
+
+  // --- Medir el tiempo total del loop en milisegundos ---
+  unsigned long loopInicio = millis();
+
   // --- Cambio de modo con el botón ---
   if (digitalRead(BTN) == LOW) {
     modo = 1 - modo;  // alterna entre LED1 y LED2
@@ -53,8 +57,18 @@ void loop() {
     while (digitalRead(BTN) == LOW); // espera a soltar el botón
   }
 
+  //--- Medir el tiempo de ejecución de medirNivel(sensor1) ---
+  unsigned long t1_inicio = micros();
   int nivel1 = medirNivel(sensor1);
+  unsigned long t1_fin = micros();
+  unsigned long tiempoNivel1 = t1_fin - t1_inicio; // en microsegundos
+
+  //--- Medir el tiempo de ejecución de medirNivel(sensor2) ---
+  unsigned long t2_inicio = micros();
   int nivel2 = medirNivel(sensor2);
+  unsigned long t2_fin = micros();
+  unsigned long tiempoNivel2 = t2_fin - t2_inicio; // en microsegundos
+
   unsigned long ahora = millis(); // Obtiene tiempo actual en milisegundos 
   
   // --- Detección de "evento" de aplauso/soplido ---
@@ -91,5 +105,18 @@ void loop() {
     lcd.print(estadoLED2 ? "ON " : "OFF");
   }
 
+  // --- Medir tiempo total del loop (en milisegundos) ---
+  unsigned long loopFin = millis();
+  unsigned long tiempoLoop = loopFin - loopInicio;
+
+  // --- Mostrar resultados en el Monitor Serial ---
+  Serial.print("Tiempo medirNivel(S1): ");
+  Serial.print(tiempoNivel1);
+  Serial.print(" us | medirNivel(S2): ");
+  Serial.print(tiempoNivel2);
+  Serial.print(" us | Tiempo total loop: ");
+  Serial.print(tiempoLoop);
+  Serial.println(" ms");
+  
   delay(100); // pequeña pausa de estabilidad
 }
