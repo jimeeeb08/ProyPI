@@ -29,11 +29,41 @@ const unsigned long intervaloSilencio = 700;
 int medirNivel(int pin) {
   int vMax = 0;
   int vMin = 1023;
-  for (int i = 0; i < lecturas; i++) {
+  int valor = 0; //Variable para almacenar el valor de la lectura
+
+  asm volatile(
+    // --- Selección del canal ADC ---
+    "lds  r16, ADMUX \n"  
+    "andi r16, 0xF0 \n"  // Limpiar el canal
+    "ori  r16, %[canal] \n" 
+    "sts  ADMUX, r16 \n" 
+
+    // --- Iniciar conversión ---
+     "sbi  %[ADCSRA], %[ADSC]  \n" 
+
+    : //output_operands
+    [vMax] "+r" (vMax),
+    [vMin] "+r" (vMin),
+    [valor] "+r" (valor)
+  
+    : //input_operands
+    [canal] "r" (pin & 0x0F),
+    [ADCSRA] "I" (_SFR_IO_ADDR(ADCSRA)),
+    [ADSC] "I" (ADSC)
+
+    : //clobbered_registers
+    "r16"
+
+  )
+
+  //Código original de referencia
+  /*for (int i = 0; i < lecturas; i++) {
     int v = analogRead(pin);
     if (v > vMax) vMax = v;
     if (v < vMin) vMin = v;
   }
+  */
+
   return (vMax - vMin);
 }
 
