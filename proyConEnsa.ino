@@ -44,10 +44,38 @@ int medirNivel(int pin) {
     "sts  ADMUX, r16 \n" 
 
     // --- Iniciar conversión ---
-     "sbi  %[ADCSRA], %[ADSC]  \n" 
+    "sbi  %[ADCSRA], %[ADSC]  \n" 
 
-     // cuerpo de bucle 
+    // --- Esperar fin de conversión ---
+    "1: \n"
+    "sbic %[ADCSRA], %[ADSC] \n"  // Salta si ADSC == 0
+    "rjmp 1b \n"
 
+    // --- Leer el resultado ---
+    "lds  r20, ADCL \n"   // byte bajo
+    "lds  r21, ADCH \n"   // byte alto
+    "mov  %A[valor], r20 \n"
+    "mov  %B[valor], r21 \n"
+
+    // if (valor > vMax) vMax = valor; 
+    "cp   %A[vMax], %A[valor] \n"
+    "cpc  %B[vMax], %B[valor] \n"
+    "brlo 2f \n"             // vMax < valor , entonces actualiza estado
+    "rjmp 3f \n"
+    "2: \n"
+    "mov  %A[vMax], %A[valor] \n"
+    "mov  %B[vMax], %B[valor] \n"
+    "3: \n"
+
+    //  if (valor < vMin) vMin = valor; 
+    "cp   %A[valor], %A[vMin] \n"
+    "cpc  %B[valor], %B[vMin] \n"
+    "brlo 4f \n"             // valor < vMin, entonces actualiza estado
+    "rjmp 5f \n"
+    "4: \n"
+    "mov  %A[vMin], %A[valor] \n"
+    "mov  %B[vMin], %B[valor] \n"
+    "5: \n"
 
     // Cierre de bucle 
     "inc r17 \n" // i++ aumenta contador 
@@ -66,9 +94,9 @@ int medirNivel(int pin) {
     [ADSC] "I" (ADSC)
 
     : //clobbered_registers
-    "r16"
+    "r16","r17","r18","r20","r21","cc","memory"
 
-  )
+  );
 
   //Código original de referencia
   /*for (int i = 0; i < lecturas; i++) {
@@ -79,6 +107,7 @@ int medirNivel(int pin) {
   */
   return (vMax - vMin);
 }
+
 
 void setup() {
   pinMode(LED1, OUTPUT);
