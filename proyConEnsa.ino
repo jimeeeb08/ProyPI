@@ -46,12 +46,12 @@ int medirNivel(int pin) {
     // --- Iniciar conversión ---
     "sbi  %[ADCSRA], %[ADSC]  \n" 
 
-    // --- Esperar fin de conversión ---
+    // Esperar fin de conversión
     "1: \n"
     "sbic %[ADCSRA], %[ADSC] \n"  // Salta si ADSC == 0
     "rjmp 1b \n"
 
-    // --- Leer el resultado ---
+    // Leer el resultado bajo/alto del ADC
     "lds  r20, ADCL \n"   // byte bajo
     "lds  r21, ADCH \n"   // byte alto
     "mov  %A[valor], r20 \n"
